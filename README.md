@@ -1,6 +1,10 @@
-# Ethereum-Fraud-Detection
+# Ethereum Fraud Detection
 
-**Author:** Dominic Rueck · **Course project (Spring 2026)** · Analysis in [`DataMining_Project_Template_Spring_2026 (1).ipynb`](DataMining_Project_Template_Spring_2026%20(1).ipynb) (designed for **Google Colab**).
+**Author:** Dominic Rueck · **Course project (Spring 2026)**  
+**Notebook:** [`Ethereum_Fraud_Detection.ipynb`](Ethereum Fraud Detection.ipynb) (written for **Google Colab** and local Jupyter).  
+**Data:** [`transaction_dataset.csv`](transaction_dataset.csv) (Kaggle: [Ethereum Transaction Dataset for Fraud Detection](https://www.kaggle.com/datasets/vagifa/ethereum-frauddetection-dataset)).
+
+---
 
 ## Project workflow
 
@@ -10,48 +14,87 @@ The notebook follows an end-to-end analytics workflow:
 2. **Exploratory data analysis (EDA) and data preparation**
 3. **Model development, evaluation, and interpretation**
 
-## Project overview
+---
 
-### 1. Introduction and problem statement
+## Problem and target
 
-As blockchain technology gains mainstream adoption, the Ethereum network has become a primary hub for global decentralized finance. However, as with all financial systems, people try to exploit vulnerabilities for fraudulent gain. Detecting and preventing fraud on the Ethereum blockchain is crucial for maintaining trust and security in the ecosystem.
+The goal is a **binary classifier** at the **wallet (address) level**: predict whether an Ethereum address is associated with fraudulent behavior using aggregated transaction statistics. The supervised label is **`FLAG`** (0 = legitimate, 1 = fraud).
 
-The core objective of this project is to build a robust classification model capable of differentiating legitimate from fraudulent activity using wallet-level behavior. The analysis uses historical transaction aggregates per Ethereum address and predicts the binary label **`FLAG`** (fraud vs. legitimate) in the dataset.
+Stakeholder-facing motivation (exchanges, compliance, end users) is documented in the notebook header and overview sections.
 
-### 2. Business use case and impact
+---
 
-This tool could serve as a critical tool for:
+## Dataset summary
 
-- **Financial institutions and exchanges**: To automatically flag suspicious patterns tied to wallets and to protect users from potential losses.
-- **Regulatory bodies**: To monitor and investigate fraudulent activity on the blockchain, supporting compliance with financial regulations.
-- **Individual users**: To safeguard assets by surfacing higher-risk addresses before irreversible actions.
+- **Size:** 9,841 rows × 51 columns in the raw CSV (per `df.info()` in the notebook).
+- **Class imbalance:** About **22%** fraud vs **78%** legitimate (roughly **3.5:1** majority to minority). The notebook reports fractions after cleaning; metrics emphasize **precision, recall, F1**, **Cohen’s kappa**, and **ROC-AUC**, not accuracy alone.
+- **Missing values:** Common in **ERC-20–related** columns when a wallet has little or no token activity. The modeling pipeline uses **imputation** rather than dropping those rows.
 
-### 3. Data acquisition
+---
 
-The data is sourced from Kaggle: [Ethereum Transaction Dataset for Fraud Detection](https://www.kaggle.com/datasets/vagifa/ethereum-frauddetection-dataset). In the notebook, the working file is `transaction_dataset.csv`. The table has **9,841 rows and 51 columns**: each row is an Ethereum **address**, with numeric features describing timing, counts, Ether flows, and ERC-20 token activity, plus **`FLAG`** as the supervised label.
+## EDA and visualizations (in the notebook)
 
-### Motivation
+The notebook generates plots with **matplotlib** and **seaborn**, including:
 
-I selected this dataset and problem because of the growing importance of blockchain technology and the critical need for security in decentralized finance. Fraud detection on Ethereum is a real-world problem with significant implications for users and institutions alike. By applying data mining techniques to this dataset, I hope to contribute to more secure blockchain systems and to gain practical experience with complex, real-world tabular data.
+- Missingness summary (bar-style figure when implemented in the notebook).
+- **Class distribution** for `FLAG`.
+- **Correlation heatmap** for numeric features.
+- Box and violin plots for top features **by class** (before and after preprocessing steps as coded).
 
-## Dataset highlights (from EDA)
+Below are **placeholder figures** for this README. Replace them by exporting PNG/SVG from the notebook (e.g. right-click plot → save, or `fig.savefig(...)`) and updating the paths if you prefer real exports.
 
-- **Class imbalance**: Roughly **22%** of rows are labeled fraud (about **3.5:1** majority-to-minority). Accuracy alone can look optimistic while missing fraud, so modeling emphasizes **precision, recall, F1, and Cohen’s kappa** (and class weights or resampling can be added if needed).
-- **Missing values**: Much of the missingness appears in **ERC-20–related** columns when a wallet has little or no token activity. Rows are retained; gaps are handled with **imputation** in the modeling pipeline.
+| Topic | Preview |
+|--------|--------|
+| Class balance | ![FLAG class distribution placeholder](images/baseline_rf_conf_matrix.png) |
+| Feature relationships | ![Correlation heatmap placeholder](images/feature_correlation.png) |
 
-## Data preparation (summary)
+---
 
-- **Identifiers removed**: `Unnamed: 0`, `Index`, and `Address` are dropped so the model does not rely on row keys or high-cardinality raw strings.
-- **Imputation**: Numeric features use **median** imputation; categorical features use **mode** (or a `(missing)` placeholder if needed). The sklearn `Pipeline` keeps the same steps if values shift.
-- **Outliers**: Numeric features (excluding the target) are **soft-capped** with the **1.5×IQR** rule; when IQR is near zero, values are clipped to the **1st–99th percentiles** to limit the influence of extreme sends, receives, or timing without deleting rare fraud rows.
-- **Train / test split**: **Stratified 80/20** split (`random_state=123`) so train and test keep a similar fraud rate.
+## Data preparation (current notebook logic)
 
-## Methods and tools
+- **Identifier columns removed:** `Unnamed: 0`, `Index`, and **`Address`** so the model does not memorize row keys or raw string IDs.
+- **Numeric outliers:** Values (excluding the target) are **soft-capped** with **1.5× IQR**; when IQR is ~0, the notebook falls back to clipping at the **1st–99th percentiles** and prints how many cells were clipped.
+- **Zero-variance numerics:** Columns with **≤1 unique value** are dropped after outlier treatment.
+- **High-cardinality categoricals:** **`ERC20 most sent token type`** and **`ERC20_most_rec_token_type`** are dropped before modeling (very high cardinality; noted in the notebook).
+- **Train / test split:** **Stratified 80/20** (`test_size=0.20`, `random_state=123`) so train and test keep a similar fraud rate.
 
-- **Languages and libraries**: Python with **pandas** and **NumPy**, **scikit-learn** (pipelines, `GridSearchCV`, imputers, encoders), **matplotlib** and **seaborn** for plots; **AutoViz** is available in the notebook for automated EDA-style charts.
-- **Primary model**: **Random Forest** classifier inside a **sklearn `Pipeline`** (course requirement), with **hyperparameter tuning** via `GridSearchCV` (e.g., weighted F1 as the scoring metric in the template).
-- **Evaluation**: Classification report, **confusion matrix**, **Cohen’s kappa**, and **feature importance** (interpreted as model reliance, not proof of causation).
+---
 
-## Data loading
+## Modeling approach
 
-For reproducibility, load the CSV from the repo, upload it in Colab, or read from a URL; keeping the raw file in version control when possible is recommended.
+- **Libraries:** **pandas**, **NumPy**, **scikit-learn** (`Pipeline`, `ColumnTransformer`, imputers, `OneHotEncoder`, **RandomForestClassifier**, **`GridSearchCV`**), **matplotlib**, **seaborn**. Additional classifiers are imported in the first code cell for extension but the delivered analysis centers on **Random Forest** (course requirement).
+- **Preprocessing pipeline:**
+  - Numeric features: **median** imputation (no scaling required for tree splits in this setup).
+  - Categorical features: **most frequent** imputation + **one-hot** encoding (`handle_unknown='ignore'`).
+- **Class imbalance:** After the split, the **minority (fraud) class is oversampled in the training set only** using `sklearn.utils.resample` so the **test set stays at the real class distribution**. Models are fit on `X_train_balanced` / `y_train_balanced`; evaluation uses `X_test` / `y_test`.
+- **Baseline:** Random Forest with a **shallower** `max_depth` (as in the notebook) for a simple reference.
+- **Tuning:** `GridSearchCV` with **5-fold CV**, primary scoring **`f1`** (binary **positive class = fraud**), and a grid over `n_estimators`, `max_depth`, `min_samples_split`, `min_samples_leaf`, and **`class_weight`** (`None` vs `'balanced'`).
+- **Evaluation:** Classification report, **confusion matrices** (baseline and tuned), **ROC curve** with **AUC**, **Cohen’s kappa**, and **Random Forest feature importances** (`feature_importances_` on the preprocessor’s combined feature names, plotted as a horizontal bar chart for the top predictors).
+
+### Model outputs (placeholders for README)
+
+![Baseline RF confusion matrix placeholder](images/baseline_rf_conf_matrix.png)
+
+![Tuned RF confusion matrix placeholder](images/tuned_rf_conf_matrix.png)
+
+![ROC curve placeholder](images/roc_curve.png)
+
+![Feature importance placeholder](images/feature_importance.png)
+
+---
+
+## How to run
+
+1. Place **`transaction_dataset.csv`** next to the notebook (or adjust `data_path` in the loading cell).
+2. Open the notebook in **Jupyter**, **VS Code**, or **Google Colab** (upload the CSV if using Colab).
+3. Run **all cells** from top to bottom so derived `df`, `X_train_balanced`, and models stay consistent.
+
+---
+
+## Repository layout (main artifacts)
+
+| File | Role |
+|------|------|
+| `Ethereum Fraud Detecion.ipynb` | Full analysis and figures |
+| `transaction_dataset.csv` | Kaggle dataset (not always committed; obtain from Kaggle if missing) |
+| `images/` | SVG placeholders (replace with exports from the notebook as desired) |
