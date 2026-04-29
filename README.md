@@ -131,5 +131,3 @@ On **the same** stratified test split, **both** models achieve **strong** fraud 
 | [`Ethereum Fraud Detection.ipynb`](Ethereum%20Fraud%20Detection.ipynb) | Full analysis, tuning, and comparison |
 | `transaction_dataset.csv` | Kaggle dataset (not always committed; obtain from Kaggle if missing) |
 | `images/` | Exported figures (RF, GBM, EDA, ROC) |
-| `ethereum_fraud_rf_model.pkl` | Saved tuned Random Forest pipeline (after running the save cell) |
-| `ethereum_fraud_gbm_model.pkl` | Saved tuned Gradient Boosting pipeline (after running the save cell) |
