@@ -20,8 +20,6 @@ The notebook follows an end-to-end analytics workflow:
 
 The goal is a **binary classifier** at the **wallet (address) level**: predict whether an Ethereum address is associated with fraudulent behavior using aggregated transaction statistics. The supervised label is **`FLAG`** (0 = legitimate, 1 = fraud).
 
-Stakeholder-facing motivation (exchanges, compliance, end users) is documented in the notebook header and overview sections.
-
 ---
 
 ## Dataset summary
@@ -40,8 +38,6 @@ The notebook generates plots with **matplotlib** and **seaborn**, including:
 - **Class distribution** for `FLAG`.
 - **Correlation heatmap** for numeric features.
 - Box and violin plots for top features **by class** (before and after preprocessing steps as coded).
-
-Below are **placeholder figures** for this README. Replace them by exporting PNG/SVG from the notebook (e.g. right-click plot → save, or `fig.savefig(...)`) and updating the paths if you prefer real exports.
 
 | Topic | Preview |
 |--------|--------|
@@ -71,7 +67,7 @@ Below are **placeholder figures** for this README. Replace them by exporting PNG
 - **Tuning:** `GridSearchCV` with **5-fold CV**, primary scoring **`f1`** (binary **positive class = fraud**), and a grid over `n_estimators`, `max_depth`, `min_samples_split`, `min_samples_leaf`, and **`class_weight`** (`None` vs `'balanced'`).
 - **Evaluation:** Classification report, **confusion matrices** (baseline and tuned), **ROC curve** with **AUC**, **Cohen’s kappa**, and **Random Forest feature importances** (`feature_importances_` on the preprocessor’s combined feature names, plotted as a horizontal bar chart for the top predictors).
 
-### Model outputs (placeholders for README)
+### Model outputs
 
 ![Baseline RF confusion matrix placeholder](images/baseline_rf_conf_matrix.png)
 
@@ -97,4 +93,4 @@ Below are **placeholder figures** for this README. Replace them by exporting PNG
 |------|------|
 | `Ethereum Fraud Detecion.ipynb` | Full analysis and figures |
 | `transaction_dataset.csv` | Kaggle dataset (not always committed; obtain from Kaggle if missing) |
-| `images/` | SVG placeholders (replace with exports from the notebook as desired) |
+| `images/` | exported figures from the notebook|
